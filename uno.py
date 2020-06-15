@@ -5,15 +5,14 @@ import random
 
 # Gamestate
 class Game:
-  deck = []
-  pile = []
-  players = []
-  nPlayers = 0
   names = ["Bryan", "Raiden", "Erik", "Frank"]
 
   def __init__(self):
+    self.pile = []
     self.deck = Deck()
+    self.players = []
     self.nPlayers = len(self.names)
+
     for i in range(self.nPlayers):
       self.players.append(Player(self.names[i], i))
 
@@ -29,7 +28,17 @@ class Game:
 
     # Game loop
     self.gameloop()
-    
+
+  def recycle(self):
+    self.deck.cards = self.pile[0:len(self.pile)-1];
+    self.pile = [self.pile[len(self.pile) - 1]]
+    # Reset wildcard color
+    for i in range(len(self.deck.cards)):
+      if (self.deck.cards[i].rank >= 13):
+        self.deck.cards[i].color = 'w'
+    # Reshuffle
+    random.shuffle(self.deck.cards)
+
   def gameloop(self):    
     won = False
     turn = 0
@@ -41,9 +50,16 @@ class Game:
         print(self.players[turn].name + " drawing " + str(toDraw))
         for i in range(toDraw):
           self.players[turn].hand.append(self.deck.pop())
+          if (len(self.deck.cards) == 0):
+            self.recycle() 
+            
         turn = (turn + direction) % self.nPlayers
         toDraw = 0
         continue
+
+      # Recycle if needed
+      if (len(self.deck.cards) == 0):
+        self.recycle()
 
       lastPlayed = self.pile[len(self.pile) - 1]
       if (lastPlayed.rank > 9 and not actionPerformed):
