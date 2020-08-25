@@ -77,7 +77,8 @@ class Game:
         actionPerformed = True
         continue
         
-      decision = self.players[turn].takeTurn(self.legalMoves(self.players[turn].hand), self.pile)
+      # Give other players number of cards
+      decision = self.players[turn].takeTurn(self.legalMoves(self.players[turn].hand), self.players[turn].hand, self.pile, direction, turn, len(self.players[0].hand), len(self.players[1].hand), len(self.players[2].hand), len(self.players[3].hand))
       if (decision < 0):
         # Draw from deck
         self.players[turn].hand.append(self.deck.pop())
@@ -118,18 +119,38 @@ class Player:
     self.number = number
     
     #Method for hard coded bot
-  def hchoose(self, legalMoves, pile):
-    # TakeTurn function has already checked for base case
-    return legalMoves[0]
-    # return legalMoves[0]
+  def hchoose(self, legalMoves, hand, pile, direction, currplayer, player1, player2, player3, player4):
+    if (not pile):
+      return -1
+    else:
+      toMove = legalMoves[0]
+      nextPlayer = currplayer + direction
+      nextHand = 0
+      if (nextPlayer == 0):
+        nextHand = player1
+      elif (nextPlayer == 1):
+        nextHand = player2
+      elif (nextPlayer == 2):
+        nextHand = player3
+      else:
+        nextHand = player4
+      if nextHand < 4:
+        for x in legalMoves:
+          if hand[x].rank > 9:
+            toMove = x
+      else:
+        # do the card counting stuff
+        toMove = legalMoves[0]
+      return toMove
+      # return legalMoves[0]
 
   # Returns -1 for draw, >= 0 index in hand to play
-  def takeTurn(self, legalMoves, pile):
+  def takeTurn(self, legalMoves, hand, pile, direction, currplayer, player1, player2, player3, player4):
     if (not legalMoves):
       return -1
     else:
       # Make decision
-      answer = self.hchoose(legalMoves, pile)
+      answer = self.hchoose(legalMoves, hand, pile, direction, currplayer, player1, player2, player3, player4)
       return answer
   
 # Card
