@@ -138,6 +138,7 @@ class Player:
         for x in legalMoves:
           if hand[x].rank > 9:
             toMove = x
+            return toMove
       else:
         # Counting colors in hand to find a card that can switch to ta better color
         topColor = pile[len(pile) - 1].color
