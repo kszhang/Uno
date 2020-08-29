@@ -139,7 +139,52 @@ class Player:
           if hand[x].rank > 9:
             toMove = x
       else:
-        # do the card counting stuff
+        # Counting colors in hand to find a card that can switch to ta better color
+        topColor = pile[len(pile) - 1].color
+        redCards = 0
+        yellowCards = 0
+        greenCards = 0
+        blueCards = 0
+        maxCount = 0
+        # If there's nothing but a wildcard, play it
+        maxColor = "w"
+        for x in hand:
+          if x.color == "r":
+            redCards += 1
+            if redCards > maxColor:
+              maxCount = redCards
+              maxColor = "r"
+          elif x.color == "y":
+            yellowCards += 1
+            if yellowCards > maxColor:
+              maxCount = yellowCards
+              maxColor = "y"
+          elif x.color == "g":
+            greenCards += 1
+            if yellowCards > maxColor:
+              maxCount = yellowCards
+              maxColor = "g"
+          elif x.color == "b":
+            blueCards += 1
+            if blueCards > maxColor:
+              maxCount = blueCards
+              maxColor = "b"
+          else:
+            # do nothing
+            maxCount = maxCount
+
+        for x in legalMoves:
+          if hand[x].color == maxColor:
+            toMove = x
+            return toMove
+
+        # If there's no number to switch to a better color with....
+
+        
+        # int pileTracker = len(pile) - 1
+        # while pileTracker >= 0:
+        #   pass
+
         toMove = legalMoves[0]
       return toMove
       # return legalMoves[0]
