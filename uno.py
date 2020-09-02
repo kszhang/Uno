@@ -10,12 +10,17 @@ class Game:
   def __init__(self):
     self.pile = []
     self.deck = Deck()
+
+    # botList = ???
+
+
+    # Start looping at this part for i in botList
     self.players = []
     self.nPlayers = len(self.names)
 
     for i in range(self.nPlayers):
       self.players.append(Player(self.names[i], i))
-
+    # append a specific bot
     random.shuffle(self.deck.cards)
 
     # Distribute cards to players
@@ -25,7 +30,7 @@ class Game:
         
     # Starting card 
     self.pile.insert(0, self.deck.pop())
-
+    # Do this a lot to find winrate
     # Game loop
     self.gameloop()
 
@@ -47,7 +52,7 @@ class Game:
     actionPerformed = False
     while (not won):
       if (toDraw):
-        print(self.players[turn].name + " drawing " + str(toDraw))
+        # print(self.players[turn].name + " drawing " + str(toDraw))
         for i in range(toDraw):
           self.players[turn].hand.append(self.deck.pop())
           if (len(self.deck.cards) == 0):
@@ -78,6 +83,7 @@ class Game:
         continue
         
       # Give other players number of cards
+      # set an "if" statement to check if the player is the 5th one to give different paramaters
       decision = self.players[turn].takeTurn(self.legalMoves(self.players[turn].hand), self.players[turn].hand, self.pile, direction, turn, len(self.players[0].hand), len(self.players[1].hand), len(self.players[2].hand), len(self.players[3].hand))
       if (decision < 0):
         # Draw from deck
@@ -95,10 +101,11 @@ class Game:
         self.players[turn].hand.pop(decision)
 
         lastPlayed = self.pile[len(self.pile) - 1]
-        print(self.players[turn].name + " played " + lastPlayed.color + str(lastPlayed.rank))
+        # print(self.players[turn].name + " played " + lastPlayed.color + str(lastPlayed.rank))
 
         if (not self.players[turn].hand):
           won = True
+          print(self.players[turn].name + " Won")
 
       turn = (turn + direction) % self.nPlayers
 
@@ -152,22 +159,22 @@ class Player:
         for x in hand:
           if x.color == "r":
             redCards += 1
-            if redCards > maxColor:
+            if redCards > maxCount:
               maxCount = redCards
               maxColor = "r"
           elif x.color == "y":
             yellowCards += 1
-            if yellowCards > maxColor:
+            if yellowCards > maxCount:
               maxCount = yellowCards
               maxColor = "y"
           elif x.color == "g":
             greenCards += 1
-            if yellowCards > maxColor:
+            if yellowCards > maxCount:
               maxCount = yellowCards
               maxColor = "g"
           elif x.color == "b":
             blueCards += 1
-            if blueCards > maxColor:
+            if blueCards > maxCount:
               maxCount = blueCards
               maxColor = "b"
           else:
@@ -180,13 +187,9 @@ class Player:
             return toMove
 
         # If there's no number to switch to a better color with....
-
         
-        # int pileTracker = len(pile) - 1
-        # while pileTracker >= 0:
-        #   pass
+        # do somthing with most frequent color info
 
-        toMove = legalMoves[0]
       return toMove
       # return legalMoves[0]
 
@@ -199,6 +202,21 @@ class Player:
       answer = self.hchoose(legalMoves, hand, pile, direction, currplayer, player1, player2, player3, player4)
       return answer
   
+
+class Bot(Player):
+  def __init__(self, name, number, CNA):
+    Player.__init__(self, name, number)
+    self.CarValues = CNA
+    self.winRate
+
+
+  def takeTurn(self, legalMoves):
+    return legalMoves[0]
+
+class Population:
+  def __init__():
+    self.botList = []
+
 # Card
 class Card:
   def __init__(self, color, rank):
@@ -223,4 +241,5 @@ class Deck:
     return self.cards.pop()
     
 if __name__ == "__main__":
+  # add command line stuff into here
   Game()
