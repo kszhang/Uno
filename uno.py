@@ -106,6 +106,7 @@ class Game:
         if (not self.players[turn].hand):
           won = True
           print(self.players[turn].name + " Won")
+          return players[turn].name
 
       turn = (turn + direction) % self.nPlayers
 
