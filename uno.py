@@ -5,34 +5,47 @@ import random
 
 # Gamestate
 class Game:
-  names = ["Bryan", "Raiden", "Erik", "Frank"]
+  names = ["Bryan", "Raiden", "Alan"]
 
-  def __init__(self):
+  def __init__(self, popOfBots):
     self.pile = []
     self.deck = Deck()
 
-    # botList = ???
+    for k in popOfBots.botList:
+      # Start looping at this part for i in botList
+      self.players = []
+      self.nPlayers = len(self.names)
 
-
-    # Start looping at this part for i in botList
-    self.players = []
-    self.nPlayers = len(self.names)
-
-    for i in range(self.nPlayers):
-      self.players.append(Player(self.names[i], i))
-    # append a specific bot
-    random.shuffle(self.deck.cards)
-
-    # Distribute cards to players
-    for n in range(7):
+      # do hard coded bots
       for i in range(self.nPlayers):
-        self.players[i].hand.append(self.deck.pop())
-        
-    # Starting card 
-    self.pile.insert(0, self.deck.pop())
-    # Do this a lot to find winrate
-    # Game loop
-    self.gameloop()
+        self.players.append(Player(self.names[i], i))
+
+      # add the Learning Bot
+      self.players.append(k)
+      self.nPlayers = len(self.players)
+      # Now loop the game.
+      for j in xrange(1,100):
+        self.pile = []
+        self.deck = Deck()
+        random.shuffle(self.deck.cards)
+
+        # Clear player hands
+        for i in range(self.nPlayers):
+          self.players[i].hand = []
+
+        # Distribute cards to players
+        for n in range(7):
+          for i in range(self.nPlayers):
+            self.players[i].hand.append(self.deck.pop())
+            
+        # Starting card 
+        self.pile.insert(0, self.deck.pop())
+        # Do this a lot to find winrate
+        # Game loop
+        winner = self.gameloop()
+        if winner == k.name:
+          k.wins += 1
+      print(k.name + ' won ' + str(k.wins) + ' out of 100')
 
   def recycle(self):
     self.deck.cards = self.pile[0:len(self.pile)-1];
@@ -84,7 +97,11 @@ class Game:
         
       # Give other players number of cards
       # set an "if" statement to check if the player is the 5th one to give different paramaters
-      decision = self.players[turn].takeTurn(self.legalMoves(self.players[turn].hand), self.players[turn].hand, self.pile, direction, turn, len(self.players[0].hand), len(self.players[1].hand), len(self.players[2].hand), len(self.players[3].hand))
+      decision = 0
+      if turn == 3:
+        decision = self.players[turn].takeTurn(self.legalMoves(self.players[turn].hand))
+      else:
+        decision = self.players[turn].takeTurn(self.legalMoves(self.players[turn].hand), self.players[turn].hand, self.pile, direction, turn, len(self.players[0].hand), len(self.players[1].hand), len(self.players[2].hand), len(self.players[3].hand))
       if (decision < 0):
         # Draw from deck
         self.players[turn].hand.append(self.deck.pop())
@@ -105,8 +122,8 @@ class Game:
 
         if (not self.players[turn].hand):
           won = True
-          print(self.players[turn].name + " Won")
-          return players[turn].name
+          # print(self.players[turn].name + " Won")
+          return self.players[turn].name
 
       turn = (turn + direction) % self.nPlayers
 
@@ -205,17 +222,20 @@ class Player:
   
 
 class Bot(Player):
+  hand = []
   def __init__(self, name, number, CNA):
     Player.__init__(self, name, number)
-    self.CarValues = CNA
-    self.winRate
-
+    self.CardValues = CNA
+    self.wins = 0
 
   def takeTurn(self, legalMoves):
-    return legalMoves[0]
+    if (not legalMoves):
+      return -1
+    else:
+      return legalMoves[0]
 
 class Population:
-  def __init__():
+  def __init__(self):
     self.botList = []
 
 # Card
@@ -243,4 +263,10 @@ class Deck:
     
 if __name__ == "__main__":
   # add command line stuff into here
-  Game()
+  botPop = Population()
+  for x in range(1,10):
+    botName = "Kevin-Jr-" + str(x)
+    DNA = []
+    botPop.botList.append(Bot(botName, 3, DNA))
+
+  Game(botPop)
