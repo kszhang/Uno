@@ -10,7 +10,7 @@ class Game:
   def __init__(self, popOfBots):
     self.pile = []
     self.deck = Deck()
-
+    avgTotal = 0
     for k in popOfBots.botList:
       # Start looping at this part for i in botList
       self.players = []
@@ -45,7 +45,11 @@ class Game:
         winner = self.gameloop()
         if winner == k.name:
           k.wins += 1
+      avgTotal += k.wins
       print(k.name + ' won ' + str(k.wins) + ' out of 100')
+    avgTotal = avgTotal / len(popOfBots.botList)
+    print(str(avgTotal) + "% win average")
+
 
   def recycle(self):
     self.deck.cards = self.pile[0:len(self.pile)-1];
@@ -159,14 +163,23 @@ class Player:
         nextHand = player3
       else:
         nextHand = player4
-      if nextHand < 4:
+
+      top = pile[len(pile) - 1]
+      if top.rank == 12 or top.rank == 14:
+        for x in legalMoves:
+          if hand[x].rank == 12 and hand[x].rank == 14:
+            toMove = x
+            return toMove
+      
+      elif nextHand < 3:
         for x in legalMoves:
           if hand[x].rank > 9:
             toMove = x
             return toMove
+      
       else:
         # Counting colors in hand to find a card that can switch to ta better color
-        topColor = pile[len(pile) - 1].color
+        topColor = top.color
         redCards = 0
         yellowCards = 0
         greenCards = 0
@@ -203,10 +216,6 @@ class Player:
           if hand[x].color == maxColor:
             toMove = x
             return toMove
-
-        # If there's no number to switch to a better color with....
-        
-        # do somthing with most frequent color info
 
       return toMove
       # return legalMoves[0]
