@@ -12,7 +12,7 @@ class Game:
     self.pile = []
     self.deck = Deck()
     self.Population = popOfBots
-    for x in xrange(1,100):
+    for x in range(1,100):
       print("Playing Generation: " + str(x))
       self.playGame()
       self.Population.replicateFittest()
@@ -33,7 +33,7 @@ class Game:
       self.players.append(k)
       self.nPlayers = len(self.players)
       # Now loop the game.
-      for j in xrange(1,100):
+      for j in range(1,100):
         self.pile = []
         self.deck = Deck()
         random.shuffle(self.deck.cards)
