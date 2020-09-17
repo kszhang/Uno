@@ -2,6 +2,7 @@
 # Raiden van Bronkhorst, Bryan Mendes, Kevin Zhang
 
 import random
+import thread
 from collections import Counter
 
 # Gamestate
@@ -12,7 +13,7 @@ class Game:
     self.pile = []
     self.deck = Deck()
     self.Population = popOfBots
-    for x in range(1,100):
+    for x in range(1,10):
       print("Playing Generation: " + str(x))
       self.playGame()
       self.Population.replicateFittest()
@@ -300,15 +301,14 @@ class Population:
       self.botList.remove(i)
     numToDupe = int(len(self.botList)/numToLive) + 1
     self.botList = []
-    numName = 0
+    numName = 1
     for i in TopDogs:
       i.wins = 0
       for x in range(0,numToDupe):
-        newRep = i
+        newbot = "Kevin-Jr-" + str(numName)
+        newRep = Bot(newbot, 3, i.CardValues)
         newRep.mutate()
-        botName = "Kevin-Jr-" + str(numName)
-        newRep.name = botName
-        self.botList.append(i)
+        self.botList.append(newRep)
         numName += 1
       
 
@@ -340,7 +340,7 @@ class Deck:
 if __name__ == "__main__":
   # add command line stuff into here
   initPop = []
-  for x in range(1,101):
+  for x in range(1,11):
     botName = "Kevin-Jr-" + str(x)
     DNA = []
     initPop.append(Bot(botName, 3, DNA))
