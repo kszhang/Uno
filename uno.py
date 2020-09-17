@@ -2,6 +2,7 @@
 # Raiden van Bronkhorst, Bryan Mendes, Kevin Zhang
 
 import random
+from collections import Counter
 
 # Gamestate
 class Game:
@@ -10,8 +11,16 @@ class Game:
   def __init__(self, popOfBots):
     self.pile = []
     self.deck = Deck()
+    self.Population = popOfBots
+    for x in xrange(1,100):
+      print("Playing Generation: " + str(x))
+      self.playGame()
+      self.Population.replicateFittest()
+
+  def playGame(self):
     avgTotal = 0
-    for k in popOfBots.botList:
+    for k in self.Population.botList:
+      k.wins = 0
       # Start looping at this part for i in botList
       self.players = []
       self.nPlayers = len(self.names)
@@ -47,8 +56,9 @@ class Game:
           k.wins += 1
       avgTotal += k.wins
       print(k.name + ' won ' + str(k.wins) + ' out of 100')
-    avgTotal = avgTotal / len(popOfBots.botList)
+    avgTotal = avgTotal / len(self.Population.botList)
     print(str(avgTotal) + "% win average")
+
 
 
   def recycle(self):
@@ -234,18 +244,75 @@ class Bot(Player):
   hand = []
   def __init__(self, name, number, CNA):
     Player.__init__(self, name, number)
+    self.Weights = Counter()
     self.CardValues = CNA
     self.wins = 0
+    for color in ['r', 'y', 'g', 'b']:
+      for rank in range(0, 13): # 1-9, 10, 11, 12
+        insert = color + str(rank);
+        self.Weights[insert] += 1
+    self.Weights["w13"] += 1
+    self.Weights["w14"] += 1
 
   def takeTurn(self, legalMoves):
     if (not legalMoves):
       return -1
     else:
-      return legalMoves[0]
+      poolChoose = []
+      juryRig = 0
+      for i in legalMoves:
+        toTrack = self.hand[i].color + str(self.hand[i].rank)
+        numTrack = self.Weights[toTrack]
+        for x in range(0,numTrack):
+          poolChoose.append(juryRig)
+        juryRig += 1
+
+      choicePlace = random.randrange(len(poolChoose))
+      choice = poolChoose[choicePlace]
+      return legalMoves[choice]
+
+  def mutate(self):
+    mutMax = 5
+    mutMin = 1
+    mutChan = 0.2
+    for i in self.Weights:
+      toBe = random.random()
+      if toBe < mutChan:
+        toBy = random.randrange(mutMin, mutMax)
+        self.Weights[i] += toBy
 
 class Population:
-  def __init__(self):
+  Generations = 0
+  def __init__(self, bots):
+    self.botList = bots
+    for x in self.botList:
+      x.mutate()
+
+  def replicateFittest(self):
+    numToLive = int(len(self.botList)/10) + 1
+    TopDogs = []
+    for x in range(1,3):
+      topWin = self.botList[0]
+      for i in self.botList:
+        if topWin.wins < i.wins:
+          topWin = i
+      TopDogs.append(i)
+      self.botList.remove(i)
+    numToDupe = int(len(self.botList)/numToLive) + 1
     self.botList = []
+    numName = 0
+    for i in TopDogs:
+      i.wins = 0
+      for x in range(0,numToDupe):
+        newRep = i
+        newRep.mutate()
+        botName = "Kevin-Jr-" + str(numName)
+        newRep.name = botName
+        self.botList.append(i)
+        numName += 1
+      
+
+    
 
 # Card
 class Card:
@@ -272,10 +339,11 @@ class Deck:
     
 if __name__ == "__main__":
   # add command line stuff into here
-  botPop = Population()
-  for x in range(1,10):
+  initPop = []
+  for x in range(1,101):
     botName = "Kevin-Jr-" + str(x)
     DNA = []
-    botPop.botList.append(Bot(botName, 3, DNA))
+    initPop.append(Bot(botName, 3, DNA))
 
+  botPop = Population(initPop)
   Game(botPop)
