@@ -10,69 +10,80 @@ class Game:
   names = ["Bryan", "Raiden", "Alan"]
 
   def __init__(self, popOfBots):
-    self.pile = []
-    self.deck = Deck()
     self.Population = popOfBots
-    for x in range(1,10):
+    self.avgTotal = 0
+    for x in range(1,100):
       print("Playing Generation: " + str(x))
       self.playGame()
-      self.Population.replicateFittest()
+      # self.Population.replicateFittest()
+      self.Population.CrossSelection()
+      self.Population.mutatePop(0.1)
 
   def playGame(self):
-    avgTotal = 0
+    self.avgTotal = 0
     for k in self.Population.botList:
-      k.wins = 0
-      # Start looping at this part for i in botList
-      self.players = []
-      self.nPlayers = len(self.names)
+      # Thread everything under here
+      self.BotThread(k)
+      # Sync this part
+      self.avgTotal += k.wins
+      # print(k.name + ' won ' + str(k.wins) + ' out of 100')
+    self.avgTotal = self.avgTotal / len(self.Population.botList)
+    print(str(self.avgTotal) + "% win average")
 
-      # do hard coded bots
-      for i in range(self.nPlayers):
-        self.players.append(Player(self.names[i], i))
+  
+  def BotThread(self, Bot):
+    players = []
+    nPlayers = len(self.names)
 
-      # add the Learning Bot
-      self.players.append(k)
-      self.nPlayers = len(self.players)
-      # Now loop the game.
-      for j in range(1,100):
-        self.pile = []
-        self.deck = Deck()
-        random.shuffle(self.deck.cards)
+    # do hard coded bots
+    for i in range(nPlayers):
+      players.append(Player(self.names[i], i))
 
-        # Clear player hands
-        for i in range(self.nPlayers):
-          self.players[i].hand = []
+    # add the Learning Bot
+    players.append(Bot)
+    nPlayers = len(players)
+    # Now loop the game.
+    for j in range(1,100):
+      pile = []
+      deck = Deck()
+      random.shuffle(deck.cards)
 
-        # Distribute cards to players
-        for n in range(7):
-          for i in range(self.nPlayers):
-            self.players[i].hand.append(self.deck.pop())
+      # Clear player hands
+      for i in range(nPlayers):
+        players[i].hand = []
+
+      # Distribute cards to players
+      for n in range(7):
+        for i in range(nPlayers):
+          players[i].hand.append(deck.pop())
             
-        # Starting card 
-        self.pile.insert(0, self.deck.pop())
-        # Do this a lot to find winrate
-        # Game loop
-        winner = self.gameloop()
-        if winner == k.name:
-          k.wins += 1
-      avgTotal += k.wins
-      print(k.name + ' won ' + str(k.wins) + ' out of 100')
-    avgTotal = avgTotal / len(self.Population.botList)
-    print(str(avgTotal) + "% win average")
+      # Starting card 
+      pile.insert(0, deck.pop())
+      # Do this a lot to find winrate
+      # Game loop
+      winner = self.gameloop(players, pile, deck, nPlayers)
+      if winner == Bot.name:
+        Bot.wins += 1
+    print(Bot.name + ' won ' + str(Bot.wins) + ' out of 100')
 
 
-
-  def recycle(self):
-    self.deck.cards = self.pile[0:len(self.pile)-1];
-    self.pile = [self.pile[len(self.pile) - 1]]
+  def recycle(self, pile, deck):
+    outPut = [[]]
+    deck.cards = pile[0:len(pile)-1];
+    pile1 = [pile[len(pile) - 1]]
     # Reset wildcard color
-    for i in range(len(self.deck.cards)):
-      if (self.deck.cards[i].rank >= 13):
-        self.deck.cards[i].color = 'w'
+    for i in range(len(deck.cards)):
+      if (deck.cards[i].rank >= 13):
+        deck.cards[i].color = 'w'
     # Reshuffle
-    random.shuffle(self.deck.cards)
+    random.shuffle(deck.cards)
+    outPut.append(deck)
+    outPut.append(pile1)
+    return outPut
 
-  def gameloop(self):    
+  def gameloop(self, players, pile, deck, nPlayers):    
+    # Need a placeholder for recycling pile
+    newDeck = [[]]
     won = False
     turn = 0
     direction = 1
@@ -82,31 +93,35 @@ class Game:
       if (toDraw):
         # print(self.players[turn].name + " drawing " + str(toDraw))
         for i in range(toDraw):
-          self.players[turn].hand.append(self.deck.pop())
-          if (len(self.deck.cards) == 0):
-            self.recycle() 
+          if (len(deck.cards) == 0):
+            newDeck = self.recycle(pile, deck)
+            deck = newDeck[0]
+            pile = newDeck[1]
+          players[turn].hand.append(deck.pop())
             
-        turn = (turn + direction) % self.nPlayers
+        turn = (turn + direction) % nPlayers
         toDraw = 0
         continue
 
       # Recycle if needed
-      if (len(self.deck.cards) == 0):
-        self.recycle()
+      if (len(deck.cards) == 0):
+        newDeck = self.recycle(pile, deck)
+        deck = newDeck[0]
+        pile = newDeck[1]
 
-      lastPlayed = self.pile[len(self.pile) - 1]
+      lastPlayed = pile[len(pile) - 1]
       if (lastPlayed.rank > 9 and not actionPerformed):
         if (lastPlayed.rank == 10):
-          turn = (turn + direction) % self.nPlayers
+          turn = (turn + direction) % nPlayers
         elif (lastPlayed.rank == 11):
           direction = -1 * direction
-          turn = (turn + 2 * direction) % self.nPlayers
+          turn = (turn + 2 * direction) % nPlayers
         elif (lastPlayed.rank == 12):
           toDraw = 2
-          turn = (turn + direction) % self.nPlayers
+          turn = (turn + direction) % nPlayers
         else:
           toDraw = 4
-          turn = (turn + direction) % self.nPlayers
+          turn = (turn + direction) % nPlayers
         actionPerformed = True
         continue
         
@@ -114,37 +129,37 @@ class Game:
       # set an "if" statement to check if the player is the 5th one to give different paramaters
       decision = 0
       if turn == 3:
-        decision = self.players[turn].takeTurn(self.legalMoves(self.players[turn].hand))
+        decision = players[turn].takeTurn(self.legalMoves(players[turn].hand, pile))
       else:
-        decision = self.players[turn].takeTurn(self.legalMoves(self.players[turn].hand), self.players[turn].hand, self.pile, direction, turn, len(self.players[0].hand), len(self.players[1].hand), len(self.players[2].hand), len(self.players[3].hand))
+        decision = players[turn].takeTurn(self.legalMoves(players[turn].hand, pile), players[turn].hand, pile, direction, turn, len(players[0].hand), len(players[1].hand), len(players[2].hand), len(players[3].hand))
       if (decision < 0):
         # Draw from deck
-        self.players[turn].hand.append(self.deck.pop())
+        players[turn].hand.append(deck.pop())
       else:
         # Play a card
-        if (self.players[turn].hand[decision].color == 'w'):
+        if (players[turn].hand[decision].color == 'w'):
           # Choose a color
-          self.players[turn].hand[decision].color = 'r'
+          players[turn].hand[decision].color = 'r'
 
-        if (self.players[turn].hand[decision].rank > 9):
+        if (players[turn].hand[decision].rank > 9):
           actionPerformed = False
 
-        self.pile.append(self.players[turn].hand[decision])
-        self.players[turn].hand.pop(decision)
+        pile.append(players[turn].hand[decision])
+        players[turn].hand.pop(decision)
 
-        lastPlayed = self.pile[len(self.pile) - 1]
+        lastPlayed = pile[len(pile) - 1]
         # print(self.players[turn].name + " played " + lastPlayed.color + str(lastPlayed.rank))
 
-        if (not self.players[turn].hand):
+        if (not players[turn].hand):
           won = True
           # print(self.players[turn].name + " Won")
-          return self.players[turn].name
+          return players[turn].name
 
-      turn = (turn + direction) % self.nPlayers
+      turn = (turn + direction) % nPlayers
 
   # Return indices in hand which are legal
-  def legalMoves(self, hand):
-    lastPlayed = self.pile[len(self.pile) - 1]
+  def legalMoves(self, hand, pile):
+    lastPlayed = pile[len(pile) - 1]
     legal = []
     for i in range(len(hand)):
       if (hand[i].color == lastPlayed.color or hand[i].rank == lastPlayed.rank or hand[i].color == 'w'):
@@ -290,16 +305,18 @@ class Population:
       x.mutate()
 
   def replicateFittest(self):
-    numToLive = int(len(self.botList)/10) + 1
+    # find fittest
+    numToLive = int(len(self.botList)/5)
     TopDogs = []
-    for x in range(1,3):
+    for x in range(1,numToLive):
       topWin = self.botList[0]
       for i in self.botList:
         if topWin.wins < i.wins:
           topWin = i
       TopDogs.append(i)
       self.botList.remove(i)
-    numToDupe = int(len(self.botList)/numToLive) + 1
+    # duplicate
+    numToDupe = int(len(self.botList)/numToLive)
     self.botList = []
     numName = 1
     for i in TopDogs:
@@ -311,7 +328,58 @@ class Population:
         self.botList.append(newRep)
         numName += 1
       
+  def CrossSelection(self):
+    # Do similar stratagy w/ choosing card, put down however many indexs equal to their number of wins and choose a random point a certin number of times
+    Max = len(self.botList)
+    indexPool = []
+    newPop = []
+    for x in range(0,Max):
+      for y in range(0,self.botList[x].wins):
+        indexPool.append(x)
+    # Choose a certin number of bots, make sure it's even
+    numBreeding = (int(len(self.botList)/5))*2
+    # numBreeding = 4
+    # How many children should each pair, and how to pair? just every 2? it would have to be even
+    numToDupe = int(len(self.botList)/(numBreeding/2))
+    # numToDupe = 5
+    # choose bots randomly, take a index and referance it for the next round
+    survivors = []
+    for x in range(0,numBreeding):
+      pointOfTake = random.randrange(len(indexPool))
+      survivors.append(indexPool[pointOfTake])
 
+    currId = 1
+    for x in range(0,numBreeding, 2):
+      # do a repeat to choose? pretty slow... maybe a random # compared to percentage
+      # win1/win1+win2 put into percentage 0->1, if over choose other
+      parent1 = self.botList[survivors[x]]
+      parent2 = self.botList[survivors[x+1]]
+      percent = parent1.wins / (parent1.wins + parent2.wins)
+      # Go through every weight
+      for y in range(0,numToDupe):
+        # New weight
+        WeightsToBe = Counter()
+        for z in parent1.Weights:
+          choice = random.random()
+          if random < percent:
+            WeightsToBe[z] = parent1.Weights[z]
+          else:
+            WeightsToBe[z] = parent2.Weights[z]
+        # new Name
+        newbot = "Kevin-Jr-" + str(currId)
+        newRep = Bot(newbot, 3, WeightsToBe)
+        if parent1 == parent2:
+          newRep.mutate()
+        newPop.append(newRep)
+        currId += 1
+    # Set botlist to new Population
+    self.botList = newPop
+
+  def mutatePop(self, Frac):
+    for x in self.botList:
+      shouldMutate = random.random()
+      if shouldMutate < Frac:
+        x.mutate()
     
 
 # Card
@@ -340,7 +408,7 @@ class Deck:
 if __name__ == "__main__":
   # add command line stuff into here
   initPop = []
-  for x in range(1,11):
+  for x in range(1,101):
     botName = "Kevin-Jr-" + str(x)
     DNA = []
     initPop.append(Bot(botName, 3, DNA))
